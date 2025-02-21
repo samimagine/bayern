@@ -1,4 +1,5 @@
 import json
+from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -43,3 +44,41 @@ def get_funding_by_company_size(company_size: str):
     """Returns funding options for a specific company size."""
     result = [option for option in FUNDING_DATA if option["company_size"].lower() == company_size.lower()]
     return result if result else {"error": "No funding options found for this company size"}
+
+class FundingRequest(BaseModel):
+    state: str
+    company_size: str
+    areas: list[str]
+    grant: int
+    revenue: int
+
+@app.post("/find-best-funding")
+def find_best_funding(request: FundingRequest):
+    matching_options = []
+
+    for option in FUNDING_DATA:
+        states = json.loads(option["state"].replace("'", '"'))
+        areas = json.loads(option["areas"].replace("'", '"'))
+
+        if request.state not in states and "bundesweit" not in states:
+            continue
+        if request.company_size != option["company_size"]:
+            continue 
+        if not any(area in areas for area in request.areas):
+            continue
+        if request.grant > option["grant_volume"]:
+            continue 
+        if request.revenue > option["revenue_max"]:
+            continue 
+
+        matching_options.append(option)
+
+    sorted_options = sorted(
+        matching_options,
+        key=lambda x: (-x["benefit_cost_score"], -x["approval_rate"], x["time_required"]),
+    )
+
+    if not sorted_options:
+        raise HTTPException(status_code=404, detail="No matching funding options found.")
+
+    return sorted_options[:3]
