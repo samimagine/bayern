@@ -3,3 +3,4 @@ uvicorn
 pandas
 openpyxl
 pydantic
+typing

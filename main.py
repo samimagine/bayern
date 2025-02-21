@@ -1,7 +1,9 @@
 import json
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List
+
 
 
 app = FastAPI()
@@ -48,30 +50,33 @@ def get_funding_by_company_size(company_size: str):
 class FundingRequest(BaseModel):
     state: str
     company_size: str
-    areas: list[str]
+    areas: List[str]
     grant: int
     revenue: int
 
 @app.post("/find-best-funding")
 def find_best_funding(request: FundingRequest):
+    print("Received data:", request.dict())
     matching_options = []
+    debug_info = []
 
     for option in FUNDING_DATA:
         states = json.loads(option["state"].replace("'", '"'))
         areas = json.loads(option["areas"].replace("'", '"'))
 
-        if request.state not in states and "bundesweit" not in states:
-            continue
-        if request.company_size != option["company_size"]:
-            continue 
-        if not any(area in areas for area in request.areas):
-            continue
-        if request.grant > option["grant_volume"]:
-            continue 
-        if request.revenue > option["revenue_max"]:
-            continue 
+        debug_message = {
+            "funding_option": option["funding option"],
+            "state_match": request.state in states or "bundesweit" in states,
+            "company_size_match": request.company_size == option["company_size"],
+            "areas_match": any(area in areas for area in request.areas),
+            "grant_match": request.grant <= option["grant_volume"],
+            "revenue_match": request.revenue <= option["revenue_max"]
+        }
 
-        matching_options.append(option)
+        debug_info.append(debug_message)
+
+        if all(debug_message.values()): 
+            matching_options.append(option)
 
     sorted_options = sorted(
         matching_options,
