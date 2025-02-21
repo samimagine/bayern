@@ -1,7 +1,16 @@
 import json
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://samimagine.github.io/munich"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 with open("data_funded.json", "r", encoding="utf-8") as f:
     FUNDING_DATA = json.load(f)
