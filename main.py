@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import json
-import ast  
+import ast
 
 app = FastAPI()
 
@@ -32,13 +32,25 @@ def find_best_funding(request: FundingRequest):
     debug_info = []
 
     for option in FUNDING_DATA:
-        states = option["state"]
-        areas = option["areas"]  
+        raw_state = option["state"]
+
+        if raw_state.startswith("[") and raw_state.endswith("]"):  
+            try:
+                parsed_state = ast.literal_eval(raw_state)
+                state_cleaned = parsed_state[0] if isinstance(parsed_state, list) else parsed_state
+            except (SyntaxError, ValueError):
+                state_cleaned = raw_state
+        else:
+            state_cleaned = raw_state
+
+        option["state"] = state_cleaned
+
+        areas = option["areas"]
 
         if request.state == "bundesweit":
-            state_match = "bundesweit" in states
+            state_match = "bundesweit" in state_cleaned
         else:
-            state_match = request.state in states or "bundesweit" in states
+            state_match = request.state == state_cleaned or "bundesweit" in state_cleaned
 
         company_size_match = request.company_size == option["company_size"]
         areas_match = any(area in areas for area in request.areas)
