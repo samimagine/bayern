@@ -9,7 +9,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://samimagine.github.io/munich/"],
+    allow_origins=["http://localhost:5173", "http://samimagine.github.io", "http://samimagine.github.io/munich"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
