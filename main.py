@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -76,6 +76,6 @@ def find_best_funding(request: FundingRequest):
     )
 
     if not sorted_options:
-        raise HTTPException(status_code=404, detail="No matching funding options found.")
+        return []
 
     return sorted_options
